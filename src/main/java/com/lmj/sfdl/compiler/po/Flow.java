@@ -2,10 +2,7 @@ package com.lmj.sfdl.compiler.po;
 
 import com.lmj.sfdl.compiler.parser.Syntax;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -245,7 +242,44 @@ public final class Flow {
     }
 
 
-
+    // table => type => condition
+    private static final String PURE_TABLE_KEY = "null";
+    private static Map<String,Map<String,List<Condition>>> groupConditionMap(List<Condition> conditions) {
+        Map<String,Map<String,List<Condition>>> tables = new HashMap<String, Map<String, List<Condition>>>();
+        for (Condition cdn : conditions) {
+            String type = cdn.getClass().getName();
+            if (cdn.tables.isEmpty()) {
+                Map<String,List<Condition>> maps = tables.get(PURE_TABLE_KEY);
+                if (maps == null) {
+                    maps = new HashMap<String, List<Condition>>();
+                    tables.put(PURE_TABLE_KEY, maps);
+                }
+                List<Condition> list = maps.get(type);
+                if (list == null) {
+                    list = new ArrayList<Condition>();
+                    maps.put(type,list);
+                }
+                list.add(cdn);
+            } else {
+                Iterator<String> iterator = cdn.tables.iterator();
+                while (iterator.hasNext()) {
+                    String table = iterator.next();
+                    Map<String,List<Condition>> maps = tables.get(table);
+                    if (maps == null) {
+                        maps = new HashMap<String, List<Condition>>();
+                        tables.put(table, maps);
+                    }
+                    List<Condition> list = maps.get(type);
+                    if (list == null) {
+                        list = new ArrayList<Condition>();
+                        maps.put(type,list);
+                    }
+                    list.add(cdn);
+                }
+            }
+        }
+        return tables;
+    }
 
     public String toDescription() {
 
@@ -273,24 +307,37 @@ public final class Flow {
         builder.append(" {\n");
 
         List<Condition> conditions = getSortedCondition();
-        builder.append(" WHERE ");
-        for (Condition cdn : conditions) {
-            builder.append(cdn.toDescription());
-        }
+        Map<String,Map<String,List<Condition>>> groups = groupConditionMap(conditions);
         builder.append("\n");
 
-//        List<Field> list = getFields();
-//        Collections.sort(list, new Comparator<Field>() {
-//            public int compare(Field o1, Field o2) {
-//                return o1.getSorted().compareTo(o2.getSorted());
-//            }
-//        });
-//
-//        for (Field field : list) {
-//            builder.append("    ");
-//            builder.append(field.toDescription());
-//            builder.append(",\n");
-//        }
+        // 1、纯的条件将作用于所有的表
+        // 2、除了逻辑条件、分组、排序以外，其他条件作用于表查询
+        // 3、表属性条件分析判断：唯一性、非空性、其他满足条件，参数提前判断，而不是到sql才判断
+
+        //分组
+        builder.append(" TABLES WHERE \n");
+
+        List<String> tbs = new ArrayList<String>(tables.keySet());
+        Collections.sort(tbs);
+        for (String tb : tbs) {
+            builder.append("     ");
+            builder.append(tb);
+            builder.append(" ");
+            for (Condition cdn : tables.get(tb)) {
+                builder.append(cdn.toDescription());
+            }
+            builder.append("\n");
+        }
+
+        builder.append("\n");
+
+        builder.append(" WHERE \n");
+        for (Condition cdn : pure) {
+            builder.append("     ");
+            builder.append(cdn.toDescription());
+        }
+
+        builder.append("\n");
 
         builder.append("}\n");
 
