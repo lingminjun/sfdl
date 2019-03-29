@@ -281,6 +281,24 @@ public final class Flow {
         return tables;
     }
 
+    public Table hitInTable(String table) {
+        for (Table tb : inStructs) {
+            if (tb.getKeyName().equals(table)) {
+                return tb;
+            }
+        }
+        return null;
+    }
+
+    public Table hitOutTable(String table) {
+        for (Table tb : outStructs) {
+            if (tb.getKeyName().equals(table)) {
+                return tb;
+            }
+        }
+        return null;
+    }
+
     public String toDescription() {
 
         StringBuilder builder = new StringBuilder();
@@ -306,36 +324,80 @@ public final class Flow {
         builder.append(result.getKeyName());
         builder.append(" {\n");
 
-        List<Condition> conditions = getSortedCondition();
+
+        // table => type => condition
         Map<String,Map<String,List<Condition>>> groups = groupConditionMap(conditions);
         builder.append("\n");
 
-        // 1、纯的条件将作用于所有的表
+        // 1、纯的条件先判断
         // 2、除了逻辑条件、分组、排序以外，其他条件作用于表查询
         // 3、表属性条件分析判断：唯一性、非空性、其他满足条件，参数提前判断，而不是到sql才判断
 
         //分组
         builder.append(" TABLES WHERE \n");
+        for (Map.Entry<String,Map<String,List<Condition>>> en : groups.entrySet()) {
 
-        List<String> tbs = new ArrayList<String>(tables.keySet());
-        Collections.sort(tbs);
-        for (String tb : tbs) {
-            builder.append("     ");
-            builder.append(tb);
-            builder.append(" ");
-            for (Condition cdn : tables.get(tb)) {
-                builder.append(cdn.toDescription());
+            String table = en.getKey();
+            Map<String,List<Condition>> types = en.getValue();
+
+            builder.append("    ");
+            if (hitInTable(table) != null) {
+                builder.append("in ");
+            } else {
+                builder.append("out ");
             }
+            builder.append(table);
             builder.append("\n");
-        }
+            for (Map.Entry<String,List<Condition>> entry : types.entrySet()) {
+                String type = entry.getKey();
 
+                List<Condition> cdns = entry.getValue();
+                //排序cdns
+
+                builder.append("        ");
+                builder.append(type);
+                builder.append("\n");
+
+                for (Condition cdn : cdns) {
+                    builder.append("            ");
+                    builder.append(cdn.toDescription());
+                    builder.append("\n");
+                }
+            }
+
+        }
         builder.append("\n");
 
-        builder.append(" WHERE \n");
-        for (Condition cdn : pure) {
-            builder.append("     ");
-            builder.append(cdn.toDescription());
+        //in
+        builder.append(" IN TABLES \n");
+        builder.append("    ");
+        for (int idx = 0; idx < inStructs.size(); idx++) {
+            Table tb = inStructs.get(idx);
+            if (idx > 0) {
+                builder.append(",");
+            }
+            builder.append(tb.getKeyName());
+
         }
+        builder.append("\n\n");
+
+        //out
+        builder.append(" OUT TABLES \n");
+        builder.append("    ");
+        for (int idx = 0; idx < outStructs.size(); idx++) {
+            Table tb = outStructs.get(idx);
+            if (idx > 0) {
+                builder.append(",");
+            }
+            builder.append(tb.getKeyName());
+
+        }
+        builder.append("\n\n");
+
+        //分组
+        builder.append(" OUT VIEW \n");
+        builder.append("    ");
+        builder.append(getResult().getKeyName());
 
         builder.append("\n");
 

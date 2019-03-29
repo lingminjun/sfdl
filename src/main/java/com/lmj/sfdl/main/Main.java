@@ -29,48 +29,49 @@ public final class Main {
             "    in pswd string default null ,\n" +
             "    out acct from account.id,\n" +
             "    out uid from user.id,\n" +
+            // 显然此处是一个特殊的插入符号，in的是某个字段，而不是整个表, 此处解析如何标识出来
             "    in account.uid where account.uid is null,\n" +
             "    out tk,key,refresh,expire from func `createToken` (account.id, user.id)\n" +
             ");\n" +
 //            "\n" +
-            "//查询商品\n" +
-            "view product out spu (\n" +
-            "    in spuid not empty where spu.id = spuid and sku.spuid = spuid,\n" +
-            "    in skuid,\n" +
-            "    out sel_sku from view sku where sku.id = skuid and sku.spuid = spuid and sku.stock - 5 > 0,\n" +
-            "    out skus from view sku where sku.spuid = spuid,\n" +
-            ") where spu.delete = 0 ;\n" +
-            "\n" +
-            "table account (\n" +
-            "type not empty,\n" +
-            "openid not empty,\n" +
-            "nick,\n" +
-            "mobile,\n" +
-            "email,\n" +
-            "uid\n" +
-            ");\n" +
-            "\n" +
-            "table user (\n" +
-            "nick,\n" +
-            "mobile,\n" +
-            "email\n" +
-            ");\n" +
-            "\n" +
-            "\n" +
-            "table sku (\n" +
-            "spuid not empty,\n" +
-            "name not empty,\n" +
-            "color,\n" +
-            "size,\n" +
-            "image,\n" +
-            ");\n" +
-            "\n" +
-            "\n" +
-            "table spu (\n" +
-            "name not empty,\n" +
-            "image,\n" +
-            "barcode unique\n" +
-            ");\n" +
+//            "//查询商品\n" +
+//            "view product out spu (\n" +
+//            "    in spuid not empty where spu.id = spuid and sku.spuid = spuid,\n" +
+//            "    in skuid,\n" +
+//            "    out sel_sku from view sku where sku.id = skuid and sku.spuid = spuid and sku.stock - 5 > 0,\n" +
+//            "    out skus from view sku where sku.spuid = spuid,\n" +
+//            ") where spu.delete = 0 ;\n" +
+//            "\n" +
+//            "table account (\n" +
+//            "type not empty,\n" +
+//            "openid not empty,\n" +
+//            "nick,\n" +
+//            "mobile,\n" +
+//            "email,\n" +
+//            "uid\n" +
+//            ");\n" +
+//            "\n" +
+//            "table user (\n" +
+//            "nick,\n" +
+//            "mobile,\n" +
+//            "email\n" +
+//            ");\n" +
+//            "\n" +
+//            "\n" +
+//            "table sku (\n" +
+//            "spuid not empty,\n" +
+//            "name not empty,\n" +
+//            "color,\n" +
+//            "size,\n" +
+//            "image,\n" +
+//            ");\n" +
+//            "\n" +
+//            "\n" +
+//            "table spu (\n" +
+//            "name not empty,\n" +
+//            "image,\n" +
+//            "barcode unique\n" +
+//            ");\n" +
             "";
 
 //    private static boolean startPattern(Pattern pattern, CharSequence str) {

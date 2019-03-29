@@ -389,6 +389,17 @@ public final class Syntax {
                     struct = Pool.getView(name.getStruct());
                 } else {
                     struct = Pool.getTable(name.getStruct());
+
+                    if (flow != null) {
+                        if (Option.IN == option || Option.INOUT == option) {
+                            flow.addInStruct((Table) struct);
+                        }
+
+                        if (Option.OUT == option || Option.INOUT == option) {
+                            flow.addOutStruct((Table) struct);
+                        }
+
+                    }
                 }
                 //自动创建属性
                 fields.add(struct.getField(name.getField(),true));
@@ -435,7 +446,7 @@ public final class Syntax {
                         //给结构创建属性
                         if (struct.getType() == StructType.VIEW) {
                             if (option == Option.OUT || option == Option.INOUT) {
-                                Pool.getTable(name.getStruct());//创建table
+                                Table table = Pool.getTable(name.getStruct());//创建table
                                 ((View)struct).addRelyTable(name.getStruct());
                             }
                         }
@@ -458,7 +469,18 @@ public final class Syntax {
                         }
                     }
                 } else {//不应该出现此种场景，全局区无故创建table
-                    Syntax.exception("Ambiguous name content", name.getStruct());
+                    Table table = Pool.getTable(name.getStruct());//创建table
+                    if (flow != null) {
+                        if (Option.IN == option || Option.INOUT == option) {
+                            flow.addInStruct(table);
+                        }
+
+                        if (Option.OUT == option || Option.INOUT == option) {
+                            flow.addOutStruct(table);
+                        }
+
+                    }
+//                    Syntax.exception("Ambiguous name content", name.getStruct());
                 }
             }
 
@@ -1352,11 +1374,11 @@ public final class Syntax {
     }
 
     public static RuntimeException exception(String msg,StringBuilder builder) {
-        return new RuntimeException("Syntax error！" + msg + " near by " + builder.substring(0,10));
+        throw new RuntimeException("Syntax error！" + msg + " near by " + builder.substring(0,10));
     }
 
     public static RuntimeException exception(String msg,String location) {
-        return new RuntimeException("Syntax error！" + msg + " near by " + location);
+        throw new RuntimeException("Syntax error！" + msg + " near by " + location);
     }
 
     public static void warning(String msg,StringBuilder builder) {
