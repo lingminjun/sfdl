@@ -329,12 +329,26 @@ public final class Flow {
         Map<String,Map<String,List<Condition>>> groups = groupConditionMap(conditions);
         builder.append("\n");
 
+        //分组
+        builder.append(" TABLES WHERE \n");
+
+        // 核心逻辑演练，
+        // 1、流输入参数一律叫做待保存属性（+待输出字段）。
+        // 2、全局属性条件（不与表关联的），一律做参数输入校验，函数最新的语句
+        // 3、优先out查询，继续判断插入的有效性，查询返回值，留作待保存字段（+待输出字段）
+        // 4、由于sql不支持null和pattern和func，故查出数据后继续判断数据有效性
+        // 5、若存在全局保存表(定义flow时in修饰的)，开始按照表顺序选出保存字段（从所有待保存字段中找，与表字段名匹配的）
+        // 6、由于保存字段由于表修饰不能为空，则优化非空字段作为第2或者第4条件
+        // 7、其他嵌套in保存语句最后执行（in显示的修饰）
+        // 8、最后返回flow定义时的out对象，若未定义，则输出第3 out的所有内容
+
+
+        // 其他补充
         // 1、纯的条件先判断
         // 2、除了逻辑条件、分组、排序以外，其他条件作用于表查询
         // 3、表属性条件分析判断：唯一性、非空性、其他满足条件，参数提前判断，而不是到sql才判断
 
-        //分组
-        builder.append(" TABLES WHERE \n");
+
         for (Map.Entry<String,Map<String,List<Condition>>> en : groups.entrySet()) {
 
             String table = en.getKey();
